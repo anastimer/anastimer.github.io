@@ -24,16 +24,21 @@
       background: rgba(11, 15, 25, .72);
       backdrop-filter: blur(6px);
       text-align: center;
-    }
+      position: relative;
+      padding-bottom: 78px;
+}
+
     h1 {
       margin: 0 0 28px;
       font-size: 42px;
       font-weight: 800;
       letter-spacing: .15em;
     }
-    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;   margin-bottom: 18px;
+}
     .box { padding: 16px; border-radius: 14px; background: rgba(255,255,255,.10); text-align: center; }
-    .num { font-size: 44px; font-weight: 750; letter-spacing: .5px; }
+    .num { font-size: 44px; font-weight: 750; letter-spacing: .5px;   text-align: center;
+}
     .lbl { font-size: 13px; opacity: .90; margin-top: 6px; }
     .small { margin-top: 16px; opacity: .85; font-size: 12px; }
     @media (max-width: 520px) {
@@ -41,18 +46,117 @@
       .grid { grid-template-columns: repeat(2, 1fr); }
       .num { font-size: 38px; }
     }
+  
+    .controls{
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    button.toggle{
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      backdrop-filter: blur(6px);
+    }
+    button.toggle:hover{
+      background: rgba(0,0,0,.35);
+    }
+    .hidden{ display:none !important; }
+    .grid.single{
+      grid-template-columns: 1fr;
+      max-width: 320px;
+      margin-inline: auto;
+      justify-items: center;
+  align-items: center;
+}
+    .grid.single .num{
+      font-size: clamp(44px, 7vw, 72px);
+      letter-spacing: -0.02em;
+    }
+
+  
+    /* Toggle in basso a destra nel riquadro */
+    .controls{
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      margin-top: 0;
+      display: block;
+    }
+    button.toggle{
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+    }
+    button.toggle svg{
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: rgba(255,255,255,.95);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    /* Spazio maggiore tra cifre per i secondi totali */
+    #s.total-seconds{
+      letter-spacing: 0.22em;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+  
+    .grid.single .box{
+      justify-self: center;
+      width: min(420px, 100%);
+    }
+  
+    /* Migliorie visualizzazione "solo secondi" */
+    .grid.single{
+      max-width: 720px;           /* più largo per contenere molte cifre */
+      justify-content: center;
+      justify-items: center;
+      margin: 0 auto 18px auto;   /* centrato rispetto al titolo */
+    }
+    .grid.single .box{
+      width: auto;                /* si adatta al contenuto */
+      min-width: 340px;
+      max-width: 720px;
+      padding-inline: 26px;       /* più spazio laterale nel riquadro */
+    }
+    #s.total-seconds{
+      letter-spacing: 0.18em;     /* spazio tra cifre, ma senza far uscire dal riquadro */
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+
   </style>
 </head>
 <body>
   <main class="card" aria-live="polite">
     <h1>ANASTIMER</h1>
 
-    <section class="grid">
-      <div class="box"><div class="num" id="d">--</div><div class="lbl">Giorni</div></div>
-      <div class="box"><div class="num" id="h">--</div><div class="lbl">Ore</div></div>
-      <div class="box"><div class="num" id="m">--</div><div class="lbl">Minuti</div></div>
-      <div class="box"><div class="num" id="s">--</div><div class="lbl">Secondi</div></div>
+    <section class="grid" id="grid">
+      <div class="box" id="box-d"><div class="num" id="d">--</div><div class="lbl">Giorni</div></div>
+      <div class="box" id="box-h"><div class="num" id="h">--</div><div class="lbl">Ore</div></div>
+      <div class="box" id="box-m"><div class="num" id="m">--</div><div class="lbl">Minuti</div></div>
+      <div class="box" id="box-s"><div class="num" id="s">--</div><div class="lbl" id="lbl-s">Secondi</div></div>
     </section>
+
+    <div class="controls">
+      <button class="toggle" id="toggleMode" type="button" aria-pressed="false" aria-label="Alterna visualizzazione secondi" title="Alterna: solo secondi / dettagli"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <circle cx="12" cy="12" r="9"></circle>
+  <path d="M12 7v5l3 2"></path>
+</svg></button>
+    </div>
 
     <p class="small" id="status"></p>
   </main>
@@ -61,7 +165,50 @@
     const target = new Date("2027-09-01T00:00:00+02:00");
     const pad2 = n => String(n).padStart(2, "0");
 
-    function tick() {
+    function formatSecondsGrouped(n){
+      // format number with thin spaces every 3 digits
+      return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+
+    
+
+    const grid = document.getElementById("grid");
+    const boxD = document.getElementById("box-d");
+    const boxH = document.getElementById("box-h");
+    const boxM = document.getElementById("box-m");
+    const boxS = document.getElementById("box-s");
+    const lblS = document.getElementById("lbl-s");
+    const toggleBtn = document.getElementById("toggleMode");
+
+    let showTotalSeconds = false;
+
+    function applyMode(){
+      toggleBtn.setAttribute("aria-pressed", String(showTotalSeconds));
+      if(showTotalSeconds){
+        s.classList.add("total-seconds");
+        boxD.classList.add("hidden");
+        boxH.classList.add("hidden");
+        boxM.classList.add("hidden");
+        grid.classList.add("single");
+        lblS.textContent = "Secondi";      }else{
+        s.classList.remove("total-seconds");
+        boxD.classList.remove("hidden");
+        boxH.classList.remove("hidden");
+        boxM.classList.remove("hidden");
+        grid.classList.remove("single");
+        lblS.textContent = "Secondi";      }
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      showTotalSeconds = !showTotalSeconds;
+      applyMode();
+      tick(); // aggiorna subito
+    });
+
+    applyMode();
+
+function tick() {
       const diff = target - new Date();
 
       if (diff <= 0) {
@@ -72,10 +219,16 @@
       }
 
       const t = Math.floor(diff / 1000);
-      d.textContent = Math.floor(t / 86400);
-      h.textContent = pad2(Math.floor(t % 86400 / 3600));
-      m.textContent = pad2(Math.floor(t % 3600 / 60));
-      s.textContent = pad2(t % 60);
+
+      if (showTotalSeconds) {
+        // Solo secondi totali (numero "grezzo")
+        s.textContent = formatSecondsGrouped(t);
+      } else {
+        d.textContent = Math.floor(t / 86400);
+        h.textContent = pad2(Math.floor(t % 86400 / 3600));
+        m.textContent = pad2(Math.floor(t % 3600 / 60));
+        s.textContent = pad2(t % 60);
+      }
 
       setTimeout(tick, 250);
     }
