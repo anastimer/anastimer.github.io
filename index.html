@@ -138,11 +138,55 @@
       text-align: center;
     }
 
+  
+    /* --- Citazioni (pulsante 🚀 + box testo) --- */
+    .card{ position: relative; padding-bottom: 78px; }
+    .quote-btn{
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(0,0,0,0.25);
+      color: inherit;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      backdrop-filter: blur(6px);
+    }
+    .quote-btn:active{ transform: scale(0.98); }
+    .quote{
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.18);
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+    .quote p{
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.35;
+      font-style: italic;
+      opacity: 0.95;
+    }
+
+
   </style>
 </head>
 <body>
   <main class="card" aria-live="polite">
     <h1>ANASTIMER</h1>
+
+    <button class="quote-btn" id="quoteBtn" type="button" aria-expanded="false" aria-controls="quoteBox" title="Mostra citazione del giorno">🚀</button>
+
 
     <section class="grid" id="grid">
       <div class="box" id="box-d"><div class="num" id="d">--</div><div class="lbl">Giorni</div></div>
@@ -158,82 +202,434 @@
 </svg></button>
     </div>
 
+    <div class="quote" id="quoteBox" hidden>
+      <p id="quoteText"></p>
+    </div>
+
     <p class="small" id="status"></p>
   </main>
 
   <script>
+    // ==== Countdown ====
     const target = new Date("2027-09-01T00:00:00+02:00");
     const pad2 = n => String(n).padStart(2, "0");
 
     function formatSecondsGrouped(n){
-      // format number with thin spaces every 3 digits
       return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     }
-
-
-    
 
     const grid = document.getElementById("grid");
     const boxD = document.getElementById("box-d");
     const boxH = document.getElementById("box-h");
     const boxM = document.getElementById("box-m");
-    const boxS = document.getElementById("box-s");
     const lblS = document.getElementById("lbl-s");
     const toggleBtn = document.getElementById("toggleMode");
+
+    const dEl = document.getElementById("d");
+    const hEl = document.getElementById("h");
+    const mEl = document.getElementById("m");
+    const sEl = document.getElementById("s");
+    const statusEl = document.getElementById("status");
 
     let showTotalSeconds = false;
 
     function applyMode(){
       toggleBtn.setAttribute("aria-pressed", String(showTotalSeconds));
       if(showTotalSeconds){
-        s.classList.add("total-seconds");
+        sEl.classList.add("total-seconds");
         boxD.classList.add("hidden");
         boxH.classList.add("hidden");
         boxM.classList.add("hidden");
         grid.classList.add("single");
-        lblS.textContent = "Secondi";      }else{
-        s.classList.remove("total-seconds");
+        lblS.textContent = "Secondi";
+      } else {
+        sEl.classList.remove("total-seconds");
         boxD.classList.remove("hidden");
         boxH.classList.remove("hidden");
         boxM.classList.remove("hidden");
         grid.classList.remove("single");
-        lblS.textContent = "Secondi";      }
+        lblS.textContent = "Secondi";
+      }
     }
 
     toggleBtn.addEventListener("click", () => {
       showTotalSeconds = !showTotalSeconds;
       applyMode();
-      tick(); // aggiorna subito
+      tick();
     });
 
-    applyMode();
-
-function tick() {
+    function tick(){
       const diff = target - new Date();
-
       if (diff <= 0) {
-        d.textContent = "0";
-        h.textContent = m.textContent = s.textContent = "00";
-        status.textContent = "È arrivato il momento!";
+        dEl.textContent = "0";
+        hEl.textContent = mEl.textContent = sEl.textContent = "00";
+        statusEl.textContent = "È arrivato il momento!";
         return;
       }
 
       const t = Math.floor(diff / 1000);
 
       if (showTotalSeconds) {
-        // Solo secondi totali (numero "grezzo")
-        s.textContent = formatSecondsGrouped(t);
+        sEl.textContent = formatSecondsGrouped(t);
       } else {
-        d.textContent = Math.floor(t / 86400);
-        h.textContent = pad2(Math.floor(t % 86400 / 3600));
-        m.textContent = pad2(Math.floor(t % 3600 / 60));
-        s.textContent = pad2(t % 60);
+        dEl.textContent = Math.floor(t / 86400);
+        hEl.textContent = pad2(Math.floor((t % 86400) / 3600));
+        mEl.textContent = pad2(Math.floor((t % 3600) / 60));
+        sEl.textContent = pad2(t % 60);
       }
 
       setTimeout(tick, 250);
     }
 
+    applyMode();
     tick();
+
+    // ==== Citazione del giorno (Europe/Rome) ====
+    const QUOTES = [
+
+/* ======================================================
+   SUN TZU – L’ARTE DELLA GUERRA (140)
+   ====================================================== */
+"Ogni vittoria nasce dalla preparazione. — Sun Tzu, L’arte della guerra",
+"Chi prevede vince prima di agire. — Sun Tzu, L’arte della guerra",
+"La forza sta nell’essere pronti. — Sun Tzu, L’arte della guerra",
+"Il successo favorisce chi si prepara. — Sun Tzu, L’arte della guerra",
+"La strategia viene prima dell’azione. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non teme l’attesa. — Sun Tzu, L’arte della guerra",
+"Il vantaggio si costruisce in anticipo. — Sun Tzu, L’arte della guerra",
+"La chiarezza precede la vittoria. — Sun Tzu, L’arte della guerra",
+"Agire senza preparazione è rischiare. — Sun Tzu, L’arte della guerra",
+"Il controllo nasce dalla previsione. — Sun Tzu, L’arte della guerra",
+
+"La vera forza è invisibile. — Sun Tzu, L’arte della guerra",
+"Chi conosce il momento giusto è già avanti. — Sun Tzu, L’arte della guerra",
+"La preparazione riduce il caso. — Sun Tzu, L’arte della guerra",
+"Ogni successo è pianificato. — Sun Tzu, L’arte della guerra",
+"Chi sa attendere sceglie quando agire. — Sun Tzu, L’arte della guerra",
+"La stabilità è un vantaggio strategico. — Sun Tzu, L’arte della guerra",
+"Il tempo è un alleato per chi si prepara. — Sun Tzu, L’arte della guerra",
+"La vittoria è decisa prima del confronto. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non si affretta. — Sun Tzu, L’arte della guerra",
+"La disciplina crea superiorità. — Sun Tzu, L’arte della guerra",
+
+"Chi osserva bene agisce meglio. — Sun Tzu, L’arte della guerra",
+"La strategia evita lo scontro inutile. — Sun Tzu, L’arte della guerra",
+"Essere pronti significa essere liberi. — Sun Tzu, L’arte della guerra",
+"La previsione riduce lo sforzo. — Sun Tzu, L’arte della guerra",
+"Chi domina se stesso non è sconfitto. — Sun Tzu, L’arte della guerra",
+"La calma è una forma di controllo. — Sun Tzu, L’arte della guerra",
+"La forza nasce dall’ordine. — Sun Tzu, L’arte della guerra",
+"Chi è preparato non improvvisa. — Sun Tzu, L’arte della guerra",
+"La continuità costruisce vantaggio. — Sun Tzu, L’arte della guerra",
+"Il successo non è casuale. — Sun Tzu, L’arte della guerra",
+
+"Chi prevede non spreca energie. — Sun Tzu, L’arte della guerra",
+"La preparazione rende solido il futuro. — Sun Tzu, L’arte della guerra",
+"Chi è stabile non vacilla. — Sun Tzu, L’arte della guerra",
+"La strategia è economia di forze. — Sun Tzu, L’arte della guerra",
+"Il momento giusto vale più della forza. — Sun Tzu, L’arte della guerra",
+"La vittoria appartiene a chi è pronto. — Sun Tzu, L’arte della guerra",
+"La previsione è potere silenzioso. — Sun Tzu, L’arte della guerra",
+"Chi è preparato non teme il cambiamento. — Sun Tzu, L’arte della guerra",
+"La forza vera non si espone. — Sun Tzu, L’arte della guerra",
+"La disciplina precede il risultato. — Sun Tzu, L’arte della guerra",
+
+"Chi governa il tempo governa l’azione. — Sun Tzu, L’arte della guerra",
+"La preparazione rende inevitabile il risultato. — Sun Tzu, L’arte della guerra",
+"Chi è pronto riduce l’incertezza. — Sun Tzu, L’arte della guerra",
+"La strategia costruisce il domani. — Sun Tzu, L’arte della guerra",
+"Il vantaggio si accumula. — Sun Tzu, L’arte della guerra",
+"Chi è coerente diventa solido. — Sun Tzu, L’arte della guerra",
+"La chiarezza rende forti. — Sun Tzu, L’arte della guerra",
+"Chi prepara oggi semplifica domani. — Sun Tzu, L’arte della guerra",
+"La vittoria è un processo. — Sun Tzu, L’arte della guerra",
+"Chi controlla se stesso controlla il percorso. — Sun Tzu, L’arte della guerra",
+
+"La preparazione crea fiducia. — Sun Tzu, L’arte della guerra",
+"Il futuro favorisce chi si organizza. — Sun Tzu, L’arte della guerra",
+"La forza è continuità ben diretta. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non forza. — Sun Tzu, L’arte della guerra",
+"La strategia è pazienza applicata. — Sun Tzu, L’arte della guerra",
+"Chi prevede non è sorpreso. — Sun Tzu, L’arte della guerra",
+"La preparazione è una scelta quotidiana. — Sun Tzu, L’arte della guerra",
+"Chi è stabile resiste meglio. — Sun Tzu, L’arte della guerra",
+"La disciplina costruisce margine. — Sun Tzu, L’arte della guerra",
+"Chi conosce il tempo agisce meglio. — Sun Tzu, L’arte della guerra",
+
+"La preparazione riduce il rischio. — Sun Tzu, L’arte della guerra",
+"Il vantaggio cresce nel silenzio. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non spreca occasioni. — Sun Tzu, L’arte della guerra",
+"La strategia trasforma il futuro. — Sun Tzu, L’arte della guerra",
+"Chi costruisce oggi domina domani. — Sun Tzu, L’arte della guerra",
+"La forza nasce dalla costanza. — Sun Tzu, L’arte della guerra",
+"Chi prevede governa. — Sun Tzu, L’arte della guerra",
+"La preparazione è la vera vittoria. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non teme il domani. — Sun Tzu, L’arte della guerra",
+"La vittoria appartiene a chi è già pronto. — Sun Tzu, L’arte della guerra",
+
+"Chi si prepara riduce la necessità di combattere. — Sun Tzu, L’arte della guerra",
+"La migliore strategia evita lo scontro. — Sun Tzu, L’arte della guerra",
+"Il vantaggio nasce prima dell’azione. — Sun Tzu, L’arte della guerra",
+"Chi è ordinato vince sul disordine. — Sun Tzu, L’arte della guerra",
+"La previsione rende forti. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non è mai colto di sorpresa. — Sun Tzu, L’arte della guerra",
+"La strategia è scegliere quando non agire. — Sun Tzu, L’arte della guerra",
+"La calma decide più della forza. — Sun Tzu, L’arte della guerra",
+"Chi governa se stesso governa l’esito. — Sun Tzu, L’arte della guerra",
+"La preparazione è superiore al talento. — Sun Tzu, L’arte della guerra",
+
+"Chi vede prima agisce meglio. — Sun Tzu, L’arte della guerra",
+"La disciplina è una risorsa. — Sun Tzu, L’arte della guerra",
+"Il successo segue la pianificazione. — Sun Tzu, L’arte della guerra",
+"Chi è stabile non viene scosso. — Sun Tzu, L’arte della guerra",
+"La vittoria non è improvvisa. — Sun Tzu, L’arte della guerra",
+"Chi conosce i propri limiti li supera. — Sun Tzu, L’arte della guerra",
+"La strategia è controllo del tempo. — Sun Tzu, L’arte della guerra",
+"Chi si prepara domina il contesto. — Sun Tzu, L’arte della guerra",
+"La chiarezza riduce il conflitto. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non spreca energia. — Sun Tzu, L’arte della guerra",
+
+"La forza senza ordine è fragile. — Sun Tzu, L’arte della guerra",
+"La previsione è una forma di potere. — Sun Tzu, L’arte della guerra",
+"Chi si organizza crea vantaggio. — Sun Tzu, L’arte della guerra",
+"La vera abilità è rendere facile ciò che verrà. — Sun Tzu, L’arte della guerra",
+"Chi anticipa non rincorre. — Sun Tzu, L’arte della guerra",
+"La preparazione rende l’esito prevedibile. — Sun Tzu, L’arte della guerra",
+"Chi è disciplinato non improvvisa. — Sun Tzu, L’arte della guerra",
+"La strategia è continuità. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non teme il cambiamento. — Sun Tzu, L’arte della guerra",
+"Il successo appartiene a chi lo prepara. — Sun Tzu, L’arte della guerra",
+
+"La vittoria è una conseguenza. — Sun Tzu, L’arte della guerra",
+"Chi pianifica riduce il rischio. — Sun Tzu, L’arte della guerra",
+"La forza nasce dall’equilibrio. — Sun Tzu, L’arte della guerra",
+"Chi è coerente diventa solido. — Sun Tzu, L’arte della guerra",
+"La preparazione rende il futuro più semplice. — Sun Tzu, L’arte della guerra",
+"Chi osserva a lungo agisce con precisione. — Sun Tzu, L’arte della guerra",
+"La strategia è pazienza operativa. — Sun Tzu, L’arte della guerra",
+"Chi è pronto sceglie il momento. — Sun Tzu, L’arte della guerra",
+"La previsione riduce lo sforzo. — Sun Tzu, L’arte della guerra",
+"Chi è ordinato avanza meglio. — Sun Tzu, L’arte della guerra",
+
+"La vittoria è un processo silenzioso. — Sun Tzu, L’arte della guerra",
+"Chi prepara oggi guida domani. — Sun Tzu, L’arte della guerra",
+"La disciplina crea libertà. — Sun Tzu, L’arte della guerra",
+"Chi è pronto non forza gli eventi. — Sun Tzu, L’arte della guerra",
+"La strategia governa il risultato. — Sun Tzu, L’arte della guerra",
+"Chi controlla il ritmo controlla l’esito. — Sun Tzu, L’arte della guerra",
+"La preparazione è forza accumulata. — Sun Tzu, L’arte della guerra",
+"Chi è stabile attraversa le crisi. — Sun Tzu, L’arte della guerra",
+"La vittoria favorisce chi è costante. — Sun Tzu, L’arte della guerra",
+"Chi prevede non è confuso. — Sun Tzu, L’arte della guerra",
+
+"La preparazione chiarisce le scelte. — Sun Tzu, L’arte della guerra",
+"Chi è pronto rende inevitabile il risultato. — Sun Tzu, L’arte della guerra",
+"La strategia è vedere prima. — Sun Tzu, L’arte della guerra",
+"Chi costruisce vantaggio non corre. — Sun Tzu, L’arte della guerra",
+"La disciplina è vantaggio sostenibile. — Sun Tzu, L’arte della guerra",
+
+/* ======================================================
+   CINEMA (55)
+   ====================================================== */
+"«Non possiamo scegliere il tempo in cui viviamo, ma possiamo scegliere cosa fare del tempo che ci è dato.» — Il Signore degli Anelli – La Compagnia dell’Anello",
+"«Non sono le nostre capacità che dimostrano chi siamo davvero, ma le nostre scelte.» — Harry Potter e la Camera dei Segreti",
+"«La speranza è una cosa buona, forse la migliore.» — Le ali della libertà",
+"«Ogni uomo muore, ma non ogni uomo vive davvero.» — Braveheart",
+"«Il futuro non è scritto.» — Ritorno al futuro",
+"«Ciò che facciamo in vita riecheggia nell’eternità.» — Il Gladiatore",
+"«La vita è adesso.» — L’attimo fuggente",
+"«Non esiste crescita senza cambiamento.» — Black Panther",
+"«Il mondo cambia con il tuo esempio.» — V per Vendetta",
+"«Ogni scelta ha un prezzo.» — Il cavaliere oscuro",
+"«Il futuro si costruisce con le decisioni di oggi.» — Interstellar",
+"«Ogni giorno è una nuova possibilità.» — Yes Man",
+"«Il futuro appartiene a chi ha il coraggio di immaginarlo.» — Inception",
+"«A volte andare avanti significa lasciarsi qualcosa alle spalle.» — Forrest Gump",
+"«Ogni scelta che fai scrive una parte della tua storia.» — The Butterfly Effect",
+"«Non esiste destino che non possa essere cambiato.» — Terminator 2 – Il giorno del giudizio",
+"«Il tempo mette alla prova tutto ciò che conta.» — The Tree of Life",
+"«La speranza è un atto di resistenza.» — Hunger Games",
+"«Non si torna indietro, ma si può andare meglio.» — Le ali della libertà",
+"«Il futuro non è una linea retta.» — Arrival",
+"«A volte la risposta è continuare.» — Cast Away",
+"«Non è mai troppo tardi per scegliere chi essere.» — American History X",
+"«Il coraggio è andare avanti quando sarebbe più facile fermarsi.» — Il cavaliere oscuro – Il ritorno",
+"«Ogni fine è l’inizio di qualcos’altro.» — Cloud Atlas",
+"«Il tempo rivela ciò che siamo.» — Blade Runner 2049",
+"«Non tutto ciò che perdi è una sconfitta.» — Rocky",
+"«Il cambiamento richiede pazienza.» — La ricerca della felicità",
+"«Il futuro è costruito da piccoli gesti ripetuti.» — Julie & Julia",
+"«Anche nei momenti più bui, una scelta può fare la differenza.» — Schindler’s List",
+"«Il domani appartiene a chi non smette di provarci.» — Million Dollar Baby",
+"«La vita migliora quando smetti di rimandare.» — Yes Man",
+"«Il tempo non si ferma per nessuno.» — Titanic",
+"«La speranza sopravvive anche quando tutto sembra perduto.» — Gravity",
+"«Il futuro nasce dal coraggio di oggi.» — Brave",
+"«Andare avanti è l’unica direzione possibile.» — Mad Max: Fury Road",
+"«La scelta giusta raramente è la più semplice.» — A Beautiful Mind",
+"«Il vero viaggio non è cercare nuove terre, ma avere nuovi occhi.» — L’attimo fuggente",
+"«Non avere paura di ricominciare.» — Mangia prega ama",
+"«Il tempo cambia tutto, se glielo permetti.» — Boyhood",
+"«Il futuro non arriva: si costruisce.» — The Social Network",
+"«Ogni passo avanti conta, anche il più piccolo.» — Billy Elliot",
+"«Non è importante da dove parti, ma dove scegli di andare.» — Gattaca",
+"«La speranza è una forza che non si vede.» — I figli degli uomini",
+"«A volte per andare avanti bisogna lasciare andare.» — Frozen – Il regno di ghiaccio",
+
+/* ======================================================
+   LETTERATURA (55)
+   ====================================================== */
+"«Non è poco il tempo che abbiamo, ma molto quello che perdiamo.» — Seneca, De brevitate vitae",
+"«Il tempo è ciò che abbiamo di più prezioso.» — Seneca, Lettere a Lucilio",
+"«Diventiamo ciò che pensiamo continuamente.» — Marco Aurelio, Meditazioni",
+"«Accetta ciò che il destino ti offre.» — Marco Aurelio, Meditazioni",
+"«La vera scoperta è avere nuovi occhi.» — Marcel Proust, Alla ricerca del tempo perduto",
+"«Camminando si apre il cammino.» — Antonio Machado, Proverbi e canzoni",
+"«Siamo fatti della stessa sostanza dei sogni.» — William Shakespeare, La tempesta",
+"«Ogni giorno è una vita intera.» — Arthur Schopenhauer, Aforismi",
+"«Il carattere si forma nel silenzio.» — Johann Wolfgang von Goethe, Massime",
+"«La perseveranza è una forma di coraggio.» — Honoré de Balzac, Illusioni perdute",
+"«Il futuro entra in noi molto prima che accada.» — Rainer Maria Rilke, Lettere a un giovane poeta",
+"«Non smettere mai di costruire te stesso.» — Rainer Maria Rilke, Lettere a un giovane poeta",
+"«La pazienza è la chiave del possibile.» — Lev Tolstoj, Diario",
+"«Ogni istante è una scelta.» — Albert Camus, Taccuini",
+"«Ciò che conta non è la velocità, ma la direzione.» — Henry David Thoreau, Walden",
+"«Il tempo non ci cambia: ci rivela.» — Virginia Woolf, Momenti di essere",
+"«Il futuro non è un dono, è una conquista.» — Simone de Beauvoir, La forza delle cose",
+"«Resistere è una forma di intelligenza.» — Primo Levi, I sommersi e i salvati",
+"«Ogni attesa ha una sua dignità.» — Cesare Pavese, Il mestiere di vivere",
+"«Si cresce lentamente, ma in profondità.» — Natalia Ginzburg, Lessico famigliare",
+
+"«Il tempo è il bene più raro che possediamo.» — Seneca, Lettere a Lucilio",
+"«Il futuro appartiene a chi sa prepararlo.» — Ralph Waldo Emerson, Saggi",
+"«La perseveranza trasforma il possibile in reale.» — Samuel Johnson, Scritti",
+"«Il carattere si costruisce lentamente.» — Johann Wolfgang von Goethe, Massime",
+"«La vera libertà è dominio di sé.» — Epitteto, Manuale",
+"«Il tempo rivela più di quanto nasconda.» — Michel de Montaigne, Saggi",
+"«Ogni scelta è un atto di responsabilità.» — Jean-Paul Sartre, L’essere e il nulla",
+"«Il futuro nasce dalle abitudini di oggi.» — William James, Pragmatismo",
+"«La continuità è la forma più discreta del coraggio.» — Albert Camus, Taccuini",
+"«Il tempo non giudica, ma chiarisce.» — Marguerite Yourcenar, Memorie di Adriano",
+"«Ogni costruzione richiede pazienza.» — Italo Calvino, Lezioni americane",
+"«La maturità è saper attendere.» — Fëdor Dostoevskij, Quaderni",
+"«Il futuro non è scritto, ma preparato.» — George Orwell, Saggi",
+"«La forza di un uomo è nella sua costanza.» — Lev Tolstoj, Diario",
+"«Ogni cammino autentico è lento.» — Hermann Hesse, Siddharta",
+"«La responsabilità precede la libertà.» — Simone Weil, Quaderni",
+"«Il tempo rende giustizia alle scelte sincere.» — Natalia Ginzburg, Il mestiere di vivere",
+"«La pazienza è una forma di intelligenza.» — Baltasar Gracián, Oracolo manuale",
+"«Nulla di grande nasce in fretta.» — Virgilio, Georgiche",
+"«Il futuro è una costruzione morale.» — Hannah Arendt, Tra passato e futuro",
+"«La fedeltà a se stessi crea continuità.» — Rainer Maria Rilke, Lettere a un giovane poeta",
+
+/* ======================================================
+   BIBBIA (10)
+   ====================================================== */
+"«Siate benevoli gli uni verso gli altri, misericordiosi, perdonandovi a vicenda.» — Efesini 4,32",
+"«Beati i misericordiosi, perché troveranno misericordia.» — Matteo 5,7",
+"«Il Signore è vicino a chi ha il cuore ferito.» — Salmo 34,19",
+"«Non lasciarti vincere dal male, ma vinci il male con il bene.» — Romani 12,21",
+"«Chi semina nella pace raccoglierà nella pace.» — Giacomo 3,18",
+"«Io conosco i progetti che ho fatto per voi: progetti di pace.» — Geremia 29,11",
+"«Tutto posso in colui che mi dà la forza.» — Filippesi 4,13",
+"«L’amore copre una moltitudine di peccati.» — 1 Pietro 4,8",
+"«Il Signore rinnova la forza di chi spera in lui.» — Isaia 40,31",
+"«La speranza non delude.» — Romani 5,5",
+
+/* ======================================================
+   PROVERBI ORIENTALI / BUDDHISTI (20)
+   ====================================================== */
+"«Nessun fiore sboccia tutto in una volta.» — Proverbio buddhista",
+"«Un momento di pazienza può evitare grandi sofferenze.» — Proverbio orientale",
+"«Chi guarda avanti con calma vede più lontano.» — Proverbio cinese",
+"«La pace nasce quando smetti di resistere al tempo.» — Tradizione buddhista",
+"«Un passo consapevole vale più di cento passi affrettati.» — Proverbio zen",
+"«La mente pacifica rende il futuro più leggero.» — Insegnamento buddhista",
+"«Ciò che lasci andare perde il potere di ferirti.» — Tradizione orientale",
+"«La riconciliazione comincia dal silenzio.» — Proverbio giapponese",
+"«Anche la montagna è cresciuta granello dopo granello.» — Proverbio tibetano",
+"«Il cambiamento non va temuto, va accompagnato.» — Tradizione buddhista",
+"«Quando la mente è chiara, il cammino si apre.» — Proverbio zen",
+"«Nessuna notte è eterna.» — Proverbio orientale",
+"«La pazienza è la forma più alta di forza.» — Proverbio cinese",
+"«Chi coltiva la pace oggi raccoglie serenità domani.» — Tradizione buddhista",
+"«Ogni fine contiene un inizio silenzioso.» — Proverbio orientale",
+"«Il futuro migliora quando il cuore si alleggerisce.» — Insegnamento buddhista",
+"«Non accelerare il fiume: arriverà al mare.» — Proverbio orientale",
+"«La gentilezza è una scelta che cambia il tempo.» — Tradizione buddhista",
+"«Il perdono libera più chi lo offre che chi lo riceve.» — Proverbio orientale",
+"«Cammina piano: stai andando lontano.» — Proverbio zen"
+
+];
+
+    const QUOTE_STORAGE = {
+      date: "anastimer_quote_date",
+      text: "anastimer_quote_text",
+      used: "anastimer_quote_used_indices"
+    };
+
+    function romeDateKey(){
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Rome",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date());
+    }
+
+    function safeParseUsed(){
+      try {
+        const raw = localStorage.getItem(QUOTE_STORAGE.used);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr.filter(n => Number.isInteger(n)) : [];
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function pickDailyQuote(){
+      const today = romeDateKey();
+      const storedDate = localStorage.getItem(QUOTE_STORAGE.date);
+      const storedText = localStorage.getItem(QUOTE_STORAGE.text);
+
+      if(storedDate === today && storedText){
+        return storedText;
+      }
+
+      let used = safeParseUsed();
+      if(used.length >= QUOTES.length) used = [];
+
+      const available = [];
+      for(let i = 0; i < QUOTES.length; i++) {
+        if(!used.includes(i)) available.push(i);
+      }
+
+      const chosenIndex = available[Math.floor(Math.random() * available.length)];
+      const text = QUOTES[chosenIndex];
+
+      used.push(chosenIndex);
+      localStorage.setItem(QUOTE_STORAGE.used, JSON.stringify(used));
+      localStorage.setItem(QUOTE_STORAGE.date, today);
+      localStorage.setItem(QUOTE_STORAGE.text, text);
+
+      return text;
+    }
+
+    const quoteBtn = document.getElementById("quoteBtn");
+    const quoteBox = document.getElementById("quoteBox");
+    const quoteTextEl = document.getElementById("quoteText");
+
+    if(quoteTextEl) quoteTextEl.textContent = pickDailyQuote();
+
+    if(quoteBtn && quoteBox){
+      quoteBtn.addEventListener("click", () => {
+        const willShow = quoteBox.hasAttribute("hidden");
+        if(willShow) quoteBox.removeAttribute("hidden");
+        else quoteBox.setAttribute("hidden", "");
+        quoteBtn.setAttribute("aria-expanded", String(willShow));
+      });
+    }
   </script>
+
 </body>
 </html>
