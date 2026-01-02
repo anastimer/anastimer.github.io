@@ -179,9 +179,94 @@
     }
 
 
+  
+    /* --- Facciata / Lock screen --- */
+    body.locked{
+      background: #000;
+      background-image: none;
+      color: #fff;
+    }
+    .lockscreen{
+      width: min(720px, 92vw);
+      padding: 36px 28px;
+      text-align: center;
+    }
+    .lock-time{
+      font-size: clamp(54px, 7vw, 82px);
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.05;
+      margin: 0;
+    }
+    .lock-date{
+      margin-top: 14px;
+      font-size: clamp(16px, 2.2vw, 20px);
+      opacity: 0.9;
+      letter-spacing: 0.06em;
+    }
+    .lock-actions{
+      margin-top: 22px;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+    .lock-btn{
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+    }
+    .lock-btn:hover{ background: rgba(255,255,255,.10); }
+    .lock-form{
+      display: none;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .lock-form.show{ display: flex; }
+    .lock-input{
+      width: min(260px, 70vw);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.28);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .lock-hint{
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 6px;
+    }
+
+
   </style>
 </head>
-<body>
+<body class="locked">
+  <div id="lockscreen" class="lockscreen" aria-live="polite">
+    <p class="lock-time" id="lockTime">--:--</p>
+    <div class="lock-date" id="lockDate">--</div>
+
+    <div class="lock-actions">
+      <button class="lock-btn" id="unlockBtn" type="button">ACCEDI</button>
+
+      <div class="lock-form" id="lockForm">
+        <input class="lock-input" id="lockPass" type="password" inputmode="text" autocomplete="current-password" placeholder="Password" />
+        <button class="lock-btn" id="lockOk" type="button">OK</button>
+      </div>
+      <div class="lock-hint" id="lockMsg" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="anastimerApp" class="hidden">
+
   <main class="card" aria-live="polite">
     <h1>ANASTIMER</h1>
 
@@ -209,83 +294,176 @@
     <p class="small" id="status"></p>
   </main>
 
+  </div>
+
   <script>
-    // ==== Countdown ====
-    const target = new Date("2027-09-01T00:00:00+02:00");
-    const pad2 = n => String(n).padStart(2, "0");
+(() => {
+  'use strict';
+// =========================
+  // Facciata (ora/giorno) + sblocco
+  // =========================
+  const PASSWORD = '2803b';
+  const lock = {
+    root: document.getElementById('lockscreen'),
+    time: document.getElementById('lockTime'),
+    date: document.getElementById('lockDate'),
+    btn: document.getElementById('unlockBtn'),
+    form: document.getElementById('lockForm'),
+    pass: document.getElementById('lockPass'),
+    ok: document.getElementById('lockOk'),
+    msg: document.getElementById('lockMsg'),
+  };
+  const appRoot = document.getElementById('anastimerApp');
 
-    function formatSecondsGrouped(n){
-      return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  function formatLock() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    const date = now.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (lock.time) lock.time.textContent = time;
+    if (lock.date) lock.date.textContent = date;
+  }
+
+  function showApp() {
+    document.body.classList.remove('locked');
+    lock.root?.classList.add('hidden');
+    appRoot?.classList.remove('hidden');
+  }
+
+  function showLock() {
+    document.body.classList.add('locked');
+    lock.root?.classList.remove('hidden');
+    appRoot?.classList.add('hidden');
+  }
+
+  let unlocked = sessionStorage.getItem('anastimer_unlocked') === '1';
+
+  // Avvia clock facciata sempre (costa poco) e sincronizza al minuto
+  formatLock();
+  setInterval(formatLock, 1000);
+
+  if (unlocked) {
+    showApp();
+  } else {
+    showLock();
+  }
+
+  function fail(msg) {
+    if (lock.msg) lock.msg.textContent = msg || '';
+  }
+
+  function tryUnlock() {
+    const val = (lock.pass?.value || '').trim();
+    if (val === PASSWORD) {
+      sessionStorage.setItem('anastimer_unlocked', '1');
+      unlocked = true;
+      if (lock.msg) lock.msg.textContent = '';
+      if (lock.pass) lock.pass.value = '';
+      showApp();
+      // opzionale: porta subito il focus al timer
+      document.querySelector('h1')?.focus?.();
+    } else {
+      fail('Password errata');
+      if (lock.pass) lock.pass.select?.();
+    }
+  }
+
+  lock.btn?.addEventListener('click', () => {
+    lock.form?.classList.toggle('show');
+    lock.pass?.focus();
+  });
+  lock.ok?.addEventListener('click', tryUnlock);
+  lock.pass?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') tryUnlock();
+    if (e.key === 'Escape') {
+      lock.form?.classList.remove('show');
+      lock.pass && (lock.pass.value = '');
+      if (lock.msg) lock.msg.textContent = '';
+    }
+  });
+
+
+  // =========================
+  // Countdown
+  // =========================
+  const TARGET = new Date("2027-09-01T00:00:00+02:00");
+
+  const $ = (id) => document.getElementById(id);
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const formatSecondsGrouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+  const el = {
+    grid: $('grid'),
+    toggleMode: $('toggleMode'),
+    status: $('status'),
+    boxD: $('box-d'),
+    boxH: $('box-h'),
+    boxM: $('box-m'),
+    lblS: $('lbl-s'),
+    d: $('d'),
+    h: $('h'),
+    m: $('m'),
+    s: $('s'),
+  };
+
+  let showTotalSeconds = false;
+
+  function applyMode() {
+    if (!el.toggleMode) return;
+
+    el.toggleMode.setAttribute('aria-pressed', String(showTotalSeconds));
+
+    // When showing total seconds we hide D/H/M boxes and style the seconds field.
+    const hide = showTotalSeconds;
+    el.s?.classList.toggle('total-seconds', hide);
+    el.grid?.classList.toggle('single', hide);
+    el.boxD?.classList.toggle('hidden', hide);
+    el.boxH?.classList.toggle('hidden', hide);
+    el.boxM?.classList.toggle('hidden', hide);
+
+    if (el.lblS) el.lblS.textContent = 'Secondi';
+  }
+
+  function tick() {
+    const diffMs = TARGET - new Date();
+
+    if (diffMs <= 0) {
+      if (el.d) el.d.textContent = '0';
+      if (el.h) el.h.textContent = '00';
+      if (el.m) el.m.textContent = '00';
+      if (el.s) el.s.textContent = '00';
+      if (el.status) el.status.textContent = 'È arrivato il momento!';
+      return;
     }
 
-    const grid = document.getElementById("grid");
-    const boxD = document.getElementById("box-d");
-    const boxH = document.getElementById("box-h");
-    const boxM = document.getElementById("box-m");
-    const lblS = document.getElementById("lbl-s");
-    const toggleBtn = document.getElementById("toggleMode");
+    const totalSeconds = Math.floor(diffMs / 1000);
 
-    const dEl = document.getElementById("d");
-    const hEl = document.getElementById("h");
-    const mEl = document.getElementById("m");
-    const sEl = document.getElementById("s");
-    const statusEl = document.getElementById("status");
-
-    let showTotalSeconds = false;
-
-    function applyMode(){
-      toggleBtn.setAttribute("aria-pressed", String(showTotalSeconds));
-      if(showTotalSeconds){
-        sEl.classList.add("total-seconds");
-        boxD.classList.add("hidden");
-        boxH.classList.add("hidden");
-        boxM.classList.add("hidden");
-        grid.classList.add("single");
-        lblS.textContent = "Secondi";
-      } else {
-        sEl.classList.remove("total-seconds");
-        boxD.classList.remove("hidden");
-        boxH.classList.remove("hidden");
-        boxM.classList.remove("hidden");
-        grid.classList.remove("single");
-        lblS.textContent = "Secondi";
-      }
+    if (showTotalSeconds) {
+      if (el.s) el.s.textContent = formatSecondsGrouped(totalSeconds);
+    } else {
+      if (el.d) el.d.textContent = String(Math.floor(totalSeconds / 86400));
+      if (el.h) el.h.textContent = pad2(Math.floor((totalSeconds % 86400) / 3600));
+      if (el.m) el.m.textContent = pad2(Math.floor((totalSeconds % 3600) / 60));
+      if (el.s) el.s.textContent = pad2(totalSeconds % 60);
     }
 
-    toggleBtn.addEventListener("click", () => {
+    setTimeout(tick, 250);
+  }
+
+  if (el.toggleMode) {
+    el.toggleMode.addEventListener('click', () => {
       showTotalSeconds = !showTotalSeconds;
       applyMode();
       tick();
     });
+  }
 
-    function tick(){
-      const diff = target - new Date();
-      if (diff <= 0) {
-        dEl.textContent = "0";
-        hEl.textContent = mEl.textContent = sEl.textContent = "00";
-        statusEl.textContent = "È arrivato il momento!";
-        return;
-      }
+  applyMode();
+  tick();
 
-      const t = Math.floor(diff / 1000);
-
-      if (showTotalSeconds) {
-        sEl.textContent = formatSecondsGrouped(t);
-      } else {
-        dEl.textContent = Math.floor(t / 86400);
-        hEl.textContent = pad2(Math.floor((t % 86400) / 3600));
-        mEl.textContent = pad2(Math.floor((t % 3600) / 60));
-        sEl.textContent = pad2(t % 60);
-      }
-
-      setTimeout(tick, 250);
-    }
-
-    applyMode();
-    tick();
-
-    // ==== Citazione del giorno (Europe/Rome) ====
-    const QUOTES = [
+  // =========================
+  // Citazione del giorno (Europe/Rome)
+  // =========================
+  const QUOTES = [
 
 /* ======================================================
    SUN TZU – L’ARTE DELLA GUERRA (140)
@@ -562,74 +740,88 @@
 
 ];
 
-    const QUOTE_STORAGE = {
-      date: "anastimer_quote_date",
-      text: "anastimer_quote_text",
-      used: "anastimer_quote_used_indices"
-    };
+  const QUOTE_STORAGE = {
+    date: 'anastimer_quote_date',
+    text: 'anastimer_quote_text',
+    used: 'anastimer_quote_used_indices',
+  };
 
-    function romeDateKey(){
-      return new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Europe/Rome",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).format(new Date());
+  function romeDateKey(date = new Date()) {
+    // en-CA => YYYY-MM-DD
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Rome',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  }
+
+  function safeJsonParse(raw, fallback) {
+    try {
+      const v = JSON.parse(raw);
+      return v ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function pickDailyQuote() {
+    const today = romeDateKey();
+    const savedDate = localStorage.getItem(QUOTE_STORAGE.date);
+    const savedText = localStorage.getItem(QUOTE_STORAGE.text);
+
+    // If already picked today, reuse.
+    if (savedDate === today && savedText) return savedText;
+
+    // Load used indices list.
+    let used = safeJsonParse(localStorage.getItem(QUOTE_STORAGE.used) || '[]', []);
+    if (!Array.isArray(used)) used = [];
+
+    // Reset cycle if finished or invalid.
+    if (used.length >= QUOTES.length) used = [];
+
+    // Pick the first available index from a shuffled list (stable, no repeats).
+    const available = [];
+    for (let i = 0; i < QUOTES.length; i++) {
+      if (!used.includes(i)) available.push(i);
     }
 
-    function safeParseUsed(){
-      try {
-        const raw = localStorage.getItem(QUOTE_STORAGE.used);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr.filter(n => Number.isInteger(n)) : [];
-      } catch(e) {
-        return [];
-      }
+    // Safety: if something goes wrong, reset.
+    if (available.length === 0) {
+      used = [];
+      for (let i = 0; i < QUOTES.length; i++) available.push(i);
     }
 
-    function pickDailyQuote(){
-      const today = romeDateKey();
-      const storedDate = localStorage.getItem(QUOTE_STORAGE.date);
-      const storedText = localStorage.getItem(QUOTE_STORAGE.text);
+    // Random pick among available.
+    const idx = available[Math.floor(Math.random() * available.length)];
+    const text = QUOTES[idx];
 
-      if(storedDate === today && storedText){
-        return storedText;
-      }
+    used.push(idx);
 
-      let used = safeParseUsed();
-      if(used.length >= QUOTES.length) used = [];
+    localStorage.setItem(QUOTE_STORAGE.used, JSON.stringify(used));
+    localStorage.setItem(QUOTE_STORAGE.date, today);
+    localStorage.setItem(QUOTE_STORAGE.text, text);
 
-      const available = [];
-      for(let i = 0; i < QUOTES.length; i++) {
-        if(!used.includes(i)) available.push(i);
-      }
+    return text;
+  }
 
-      const chosenIndex = available[Math.floor(Math.random() * available.length)];
-      const text = QUOTES[chosenIndex];
+  const quoteBtn = $('quoteBtn');
+  const quoteBox = $('quoteBox');
+  const quoteText = $('quoteText');
 
-      used.push(chosenIndex);
-      localStorage.setItem(QUOTE_STORAGE.used, JSON.stringify(used));
-      localStorage.setItem(QUOTE_STORAGE.date, today);
-      localStorage.setItem(QUOTE_STORAGE.text, text);
+  if (quoteText) quoteText.textContent = pickDailyQuote();
 
-      return text;
-    }
+  if (quoteBtn && quoteBox) {
+    quoteBtn.addEventListener('click', () => {
+      const willShow = quoteBox.hasAttribute('hidden');
+      if (willShow) quoteBox.removeAttribute('hidden');
+      else quoteBox.setAttribute('hidden', '');
 
-    const quoteBtn = document.getElementById("quoteBtn");
-    const quoteBox = document.getElementById("quoteBox");
-    const quoteTextEl = document.getElementById("quoteText");
-
-    if(quoteTextEl) quoteTextEl.textContent = pickDailyQuote();
-
-    if(quoteBtn && quoteBox){
-      quoteBtn.addEventListener("click", () => {
-        const willShow = quoteBox.hasAttribute("hidden");
-        if(willShow) quoteBox.removeAttribute("hidden");
-        else quoteBox.setAttribute("hidden", "");
-        quoteBtn.setAttribute("aria-expanded", String(willShow));
-      });
-    }
-  </script>
+      quoteBtn.setAttribute('aria-expanded', String(willShow));
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
